@@ -31,6 +31,8 @@ async def handle_timeout(user_id, chat_id):
 
     while user_id in new_chat_member_dict and datetime.datetime.now() < block_date:
         await asyncio.sleep(1)
+    if user_id not in new_chat_member_dict:
+        return
 
     await block_user(user_id, chat_id, time_delta)
 
@@ -78,6 +80,7 @@ async def answer_message(message: types.Message):
 
             if user_answer == new_chat_member_dict[message.from_user.id][0]:
                 await message.reply("Правильна відповідь!")
+                new_chat_member_dict.pop(message.from_user.id)
             else:
                 await block_user(message.from_user.id, message.chat.id, datetime.timedelta(days=5))
         except ValueError:
