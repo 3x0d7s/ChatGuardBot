@@ -9,7 +9,6 @@ import config
 import aiogram
 from aiogram import types
 
-
 bot = aiogram.Bot(token=config.BOT_TOKEN)
 dp = aiogram.Dispatcher()
 
@@ -23,7 +22,6 @@ def is_bot_in_group_chat(message: types.Message):
 def generate_math_question():
     first_number = randint(2, 10)
     second_number = randint(2, 10)
-
     return first_number, second_number, first_number + second_number
 
 
@@ -32,36 +30,25 @@ async def handle_timeout(user_id, chat_id):
     block_date = datetime.datetime.now() + time_delta
 
     while user_id in new_chat_member_dict and datetime.datetime.now() < block_date:
-        continue
+        await asyncio.sleep(1)
+
+    await block_user(user_id, chat_id, time_delta)
+
+
+async def block_user(user_id, chat_id, duration):
+    block_date = datetime.datetime.now() + duration
 
     await bot.send_message(
         chat_id,
-        f"Користувач не відповів правильно на запитання протягом 1 хвилини.\n"
-        f"Користувач буде заблокований до {block_date.strftime('%d/%m/%Y %H:%M')}"
+        f"Користувач не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде заблокований до {block_date.strftime('%d/%m/%Y %H:%M')}"
     )
     await bot.ban_chat_member(
         chat_id=chat_id,
         user_id=user_id,
-        until_date=time_delta,
+        until_date=duration,
         revoke_messages=False
     )
     new_chat_member_dict.pop(user_id)
-
-
-async def block_user_by_message(message: types.Message):
-    time_delta = datetime.timedelta(days=5)
-    block_date = datetime.datetime.now() + time_delta
-
-    await message.reply("Неправильна відповідь!\nКористувач буде заблокований до "
-                        + block_date.strftime('%d/%m/%Y %H:%M'))
-    await bot.ban_chat_member(
-        chat_id=message.chat.id,
-        user_id=message.from_user.id,
-        until_date=time_delta,
-        revoke_messages=False
-    )
-
-    new_chat_member_dict.pop(message.from_user.id)
 
 
 @dp.message()
@@ -92,9 +79,9 @@ async def answer_message(message: types.Message):
             if user_answer == new_chat_member_dict[message.from_user.id][0]:
                 await message.reply("Правильна відповідь!")
             else:
-                raise ValueError
+                await block_user(message.from_user.id, message.chat.id, datetime.timedelta(days=5))
         except ValueError:
-            await block_user_by_message(message)
+            await block_user(message.from_user.id, message.chat.id, datetime.timedelta(days=5))
 
 
 async def main():
