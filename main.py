@@ -15,6 +15,12 @@ dp = aiogram.Dispatcher()
 new_chat_member_dict = dict()
 
 
+def username_or_fullname(user: types.User):
+    if user.username:
+        return "@" + user.username
+    return user.full_name
+
+
 def is_bot_in_group_chat(message: types.Message):
     return message.chat.id != message.from_user.id
 
@@ -25,32 +31,32 @@ def generate_math_question():
     return first_number, second_number, first_number + second_number
 
 
-async def handle_timeout(user_id, chat_id):
+async def handle_timeout(user: types.User, chat_id: int):
     time_delta = datetime.timedelta(minutes=1)
     block_date = datetime.datetime.now() + time_delta
 
-    while user_id in new_chat_member_dict and datetime.datetime.now() < block_date:
+    while user.id in new_chat_member_dict and datetime.datetime.now() < block_date:
         await asyncio.sleep(1)
-    if user_id not in new_chat_member_dict:
+    if user.id not in new_chat_member_dict:
         return
 
-    await block_user(user_id, chat_id, time_delta)
+    await block_user(user, chat_id, time_delta)
 
 
-async def block_user(user_id, chat_id, duration):
+async def block_user(user: types.User, chat_id: int, duration: datetime.timedelta):
     block_date = datetime.datetime.now() + duration
 
     await bot.send_message(
         chat_id,
-        f"Користувач не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде заблокований до {block_date.strftime('%d/%m/%Y %H:%M')}"
+        f"{username_or_fullname(user)} не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде заблокований до {block_date.strftime('%d/%m/%Y %H:%M')}"
     )
     await bot.ban_chat_member(
         chat_id=chat_id,
-        user_id=user_id,
+        user_id=user.id,
         until_date=duration,
         revoke_messages=False
     )
-    new_chat_member_dict.pop(user_id)
+    new_chat_member_dict.pop(user.id)
 
 
 @dp.message()
@@ -65,12 +71,12 @@ async def answer_message(message: types.Message):
 
             new_chat_member_dict[member.id] = (user_answer,
                                                datetime.datetime.now() + datetime.timedelta(minutes=1))
-            await message.answer(text=f"Привіт, {member.full_name}\n"
+            await message.answer(text=f"Привіт, {username_or_fullname(member)}\n"
                                       f"Cкільки буде {first_number} + {second_number}?\n"
                                       "На відповідь дається 1 хвилина")
 
             # Створюємо таймер для кожного нового користувача
-            await asyncio.create_task(handle_timeout(member.id, message.chat.id))
+            await asyncio.create_task(handle_timeout(member, message.chat.id))
 
             return
 
@@ -82,9 +88,9 @@ async def answer_message(message: types.Message):
                 await message.reply("Правильна відповідь!")
                 new_chat_member_dict.pop(message.from_user.id)
             else:
-                await block_user(message.from_user.id, message.chat.id, datetime.timedelta(days=5))
+                raise ValueError
         except ValueError:
-            await block_user(message.from_user.id, message.chat.id, datetime.timedelta(days=5))
+            await block_user(message.from_user, message.chat.id, datetime.timedelta(days=5))
 
 
 async def main():
