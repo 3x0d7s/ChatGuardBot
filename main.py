@@ -6,11 +6,11 @@ from random import randint
 
 import config
 
-import aiogram
+from aiogram import Bot, Dispatcher, F
 from aiogram import types
 
-bot = aiogram.Bot(token=config.BOT_TOKEN)
-dp = aiogram.Dispatcher()
+bot = Bot(token=config.BOT_TOKEN)
+dp = Dispatcher()
 
 new_chat_member_dict = dict()
 
@@ -59,6 +59,21 @@ async def block_user(user: types.User, chat_id: int, duration: datetime.timedelt
     new_chat_member_dict.pop(user.id)
 
 
+@dp.message(F.text == "!ban")
+@dp.message(F.text == "/ban")
+async def ban(message: types.Message):
+    reply = message.reply_to_message
+    if not reply:
+        return
+
+    await bot.ban_chat_member(
+        chat_id=message.chat.id,
+        user_id=reply.from_user.id,
+        revoke_messages=False
+    )
+    await message.answer(text=f"{username_or_fullname(reply.from_user)} був забанений у цьому чаті назавжди")
+
+
 @dp.message()
 async def answer_message(message: types.Message):
     if not is_bot_in_group_chat(message):
@@ -94,6 +109,7 @@ async def answer_message(message: types.Message):
 
 
 async def main():
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
