@@ -4,10 +4,12 @@ import logging
 import os
 import sys
 from random import randint
+from typing import Union, List
 
 from aiogram import Bot, Dispatcher, F
 from aiogram import types
 from aiogram.enums import ParseMode
+from aiogram.types import ChatMemberOwner, ChatMemberAdministrator
 
 TOKEN = os.environ.get("BOT_TOKEN")
 
@@ -17,21 +19,23 @@ dp = Dispatcher()
 new_chat_member_dict = dict()
 
 
-def username_or_fullname(user: types.User):
+def username_or_fullname(user: types.User) -> str:
     if user.username:
         return "@" + user.username
     return user.full_name
 
 
-def is_bot_in_group_chat(message: types.Message):
+def is_bot_in_group_chat(message: types.Message) -> bool:
     return message.chat.id != message.from_user.id
 
 
-async def has_admin_permissions(chat: types.Chat, user: types.User):
-    return user in chat.get_administrators()
+async def has_admin_permissions(chat: types.Chat, user: types.User) -> bool:
+    chat_member_list: List[Union[ChatMemberOwner, ChatMemberAdministrator]] = await chat.get_administrators()
+    admin_users_list = [admin.user for admin in chat_member_list]
+    return user in admin_users_list
 
 
-def generate_math_question():
+def generate_math_question() -> tuple:
     first_number = randint(2, 10)
     second_number = randint(2, 10)
     return first_number, second_number, first_number + second_number
@@ -39,9 +43,9 @@ def generate_math_question():
 
 async def handle_timeout(user: types.User, chat_id: int):
     time_delta = datetime.timedelta(minutes=1)
-    block_date = datetime.datetime.now() + time_delta
+    block_time = datetime.datetime.now() + time_delta
 
-    while user.id in new_chat_member_dict and datetime.datetime.now() < block_date:
+    while user.id in new_chat_member_dict and datetime.datetime.now() < block_time:
         await asyncio.sleep(1)
     if user.id not in new_chat_member_dict:
         return
@@ -69,7 +73,7 @@ async def block_user_after_timeout(user: types.User, chat_id: int, duration: dat
 @dp.message(F.text == "!ban")
 @dp.message(F.text == "/ban")
 async def ban(message: types.Message):
-    if not has_admin_permissions(chat=message.chat, user=message.from_user):
+    if not await has_admin_permissions(chat=message.chat, user=message.from_user):
         return
 
     reply = message.reply_to_message
@@ -84,10 +88,26 @@ async def ban(message: types.Message):
     await message.answer(text=f"{username_or_fullname(reply.from_user)} тепер забанений у цьому чаті назавжди")
 
 
+@dp.message(F.text == "!unban")
+@dp.message(F.text == "/unban")
+async def unmute(message: types.Message):
+    if not await has_admin_permissions(chat=message.chat, user=message.from_user):
+        return
+
+    reply = message.reply_to_message
+    if not reply:
+        return
+
+    await bot.unban_chat_member(
+        chat_id=message.chat.id,
+        user_id=reply.from_user.id
+    )
+
+
 @dp.message(F.text == "!mute")
 @dp.message(F.text == "/mute")
 async def mute(message: types.Message):
-    if not has_admin_permissions(chat=message.chat, user=message.from_user):
+    if not await has_admin_permissions(chat=message.chat, user=message.from_user):
         return
 
     reply = message.reply_to_message
@@ -103,13 +123,33 @@ async def mute(message: types.Message):
         text=f"{username_or_fullname(reply.from_user)} тепер обмежений у правах надсилати повідомлення!")
 
 
+@dp.message(F.text == "!unmute")
+@dp.message(F.text == "/unmute")
+async def unmute(message: types.Message):
+    if not await has_admin_permissions(chat=message.chat, user=message.from_user):
+        return
+
+    reply = message.reply_to_message
+    if not reply:
+        return
+
+    await bot.restrict_chat_member(
+        chat_id=message.chat.id,
+        user_id=reply.from_user.id,
+        permissions=types.chat_permissions.ChatPermissions(can_send_messages=True)
+    )
+
+
 @dp.message(F.text == "/help")
 async def send_help(message: types.Message):
     help_text = ("**Cписок команд**:\n"
                  "/ban - забанити користувача\n"
-                 "/mute - обмежити користувача у правах надсилання повідомлень\n\n"
+                 "/mute - обмежити користувача у правах надсилання повідомлень\n"
+                 "/unban - забанити користувача"
+                 "/unmute - зняти обмеження у користувача у правах надсилання повідомлень"
                  "Команду треба прописати, відповідаючи(reply) на повідомлення користувача, до якого ви "
-                 "хочете застосувати відповідну дію")
+                 "хочете застосувати відповідну дію\n"
+                 "Також можна прописувати вищезгадані команди зі знаком ! замість / у початку.")
 
     await message.answer(help_text)
 
