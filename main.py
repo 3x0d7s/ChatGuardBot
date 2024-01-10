@@ -1,15 +1,17 @@
 import asyncio
 import datetime
 import logging
+import os
 import sys
 from random import randint
 
-import config
-
 from aiogram import Bot, Dispatcher, F
 from aiogram import types
+from aiogram.enums import ParseMode
 
-bot = Bot(token=config.BOT_TOKEN)
+TOKEN = os.environ.get("BOT_TOKEN")
+
+bot = Bot(token=TOKEN, parse_mode=ParseMode.MARKDOWN)
 dp = Dispatcher()
 
 new_chat_member_dict = dict()
@@ -23,6 +25,10 @@ def username_or_fullname(user: types.User):
 
 def is_bot_in_group_chat(message: types.Message):
     return message.chat.id != message.from_user.id
+
+
+async def has_admin_permissions(chat: types.Chat, user: types.User):
+    return user in chat.get_administrators()
 
 
 def generate_math_question():
@@ -40,15 +46,16 @@ async def handle_timeout(user: types.User, chat_id: int):
     if user.id not in new_chat_member_dict:
         return
 
-    await block_user(user, chat_id, time_delta)
+    await block_user_after_timeout(user, chat_id, time_delta)
 
 
-async def block_user(user: types.User, chat_id: int, duration: datetime.timedelta):
+async def block_user_after_timeout(user: types.User, chat_id: int, duration: datetime.timedelta):
     block_date = datetime.datetime.now() + duration
 
     await bot.send_message(
         chat_id,
-        f"{username_or_fullname(user)} не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде заблокований до {block_date.strftime('%d/%m/%Y %H:%M')}"
+        f"{username_or_fullname(user)} не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде "
+        f"заблокований до {block_date.strftime('%d/%m/%Y %H:%M')}"
     )
     await bot.ban_chat_member(
         chat_id=chat_id,
@@ -62,6 +69,9 @@ async def block_user(user: types.User, chat_id: int, duration: datetime.timedelt
 @dp.message(F.text == "!ban")
 @dp.message(F.text == "/ban")
 async def ban(message: types.Message):
+    if not has_admin_permissions(chat=message.chat, user=message.from_user):
+        return
+
     reply = message.reply_to_message
     if not reply:
         return
@@ -71,29 +81,60 @@ async def ban(message: types.Message):
         user_id=reply.from_user.id,
         revoke_messages=False
     )
-    await message.answer(text=f"{username_or_fullname(reply.from_user)} був забанений у цьому чаті назавжди")
+    await message.answer(text=f"{username_or_fullname(reply.from_user)} тепер забанений у цьому чаті назавжди")
+
+
+@dp.message(F.text == "!mute")
+@dp.message(F.text == "/mute")
+async def mute(message: types.Message):
+    if not has_admin_permissions(chat=message.chat, user=message.from_user):
+        return
+
+    reply = message.reply_to_message
+    if not reply:
+        return
+
+    await bot.restrict_chat_member(
+        chat_id=message.chat.id,
+        user_id=reply.from_user.id,
+        permissions=types.chat_permissions.ChatPermissions(can_send_messages=False)
+    )
+    await message.answer(
+        text=f"{username_or_fullname(reply.from_user)} тепер обмежений у правах надсилати повідомлення!")
+
+
+@dp.message(F.text == "/help")
+async def send_help(message: types.Message):
+    help_text = ("**Cписок команд**:\n"
+                 "/ban - забанити користувача\n"
+                 "/mute - обмежити користувача у правах надсилання повідомлень\n\n"
+                 "Команду треба прописати, відповідаючи(reply) на повідомлення користувача, до якого ви "
+                 "хочете застосувати відповідну дію")
+
+    await message.answer(help_text)
+
+
+@dp.message(F.new_chat_members)
+async def greeting_new_members(message: types.Message):
+    if not is_bot_in_group_chat(message):
+        return
+
+    new_chat_member_list = message.new_chat_members
+    for member in new_chat_member_list:
+        first_number, second_number, user_answer = generate_math_question()
+        new_chat_member_dict[member.id] = (user_answer,
+                                           datetime.datetime.now() + datetime.timedelta(minutes=1))
+        await message.answer(text=f"Привіт, {username_or_fullname(member)}\n"
+                                  f"Cкільки буде {first_number} + {second_number}?\n"
+                                  "На відповідь дається 1 хвилина")
+        # Створюємо таймер для кожного нового користувача
+        await asyncio.create_task(handle_timeout(member, message.chat.id))
 
 
 @dp.message()
 async def answer_message(message: types.Message):
     if not is_bot_in_group_chat(message):
         return
-
-    new_chat_member_list = message.new_chat_members
-    if new_chat_member_list:
-        for member in new_chat_member_list:
-            first_number, second_number, user_answer = generate_math_question()
-
-            new_chat_member_dict[member.id] = (user_answer,
-                                               datetime.datetime.now() + datetime.timedelta(minutes=1))
-            await message.answer(text=f"Привіт, {username_or_fullname(member)}\n"
-                                      f"Cкільки буде {first_number} + {second_number}?\n"
-                                      "На відповідь дається 1 хвилина")
-
-            # Створюємо таймер для кожного нового користувача
-            await asyncio.create_task(handle_timeout(member, message.chat.id))
-
-            return
 
     if message.from_user.id in new_chat_member_dict:
         try:
@@ -105,11 +146,10 @@ async def answer_message(message: types.Message):
             else:
                 raise ValueError
         except ValueError:
-            await block_user(message.from_user, message.chat.id, datetime.timedelta(days=5))
+            await block_user_after_timeout(message.from_user, message.chat.id, datetime.timedelta(days=5))
 
 
 async def main():
-    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 
