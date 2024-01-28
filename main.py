@@ -11,10 +11,14 @@ from aiogram import types
 from aiogram.enums import ParseMode
 from aiogram.types import ChatMemberOwner, ChatMemberAdministrator
 
+from db_controller import DbController
+
 TOKEN = os.environ.get("BOT_TOKEN")
 
 bot = Bot(token=TOKEN, parse_mode=ParseMode.MARKDOWN)
 dp = Dispatcher()
+
+db_controller = DbController('chat_bot_db')
 
 new_chat_member_dict = dict()
 
@@ -140,16 +144,38 @@ async def unmute(message: types.Message):
     )
 
 
+@dp.message(F.text == "!warn")
+@dp.message(F.text == "/warn")
+async def warn(message: types.Message):
+    if not await has_admin_permissions(chat=message.chat, user=message.from_user):
+        return
+
+    reply = message.reply_to_message
+    if not reply:
+        return
+
+    warned_count = db_controller.warn_user(group_id=message.chat.id, user_id=reply.from_user.id)
+    if warned_count >= 3:
+        await bot.ban_chat_member(
+            chat_id=message.chat.id,
+            user_id=reply.from_user.id,
+            revoke_messages=False
+        )
+        await message.answer(text=f"{username_or_fullname(reply.from_user)} тепер забанений у цьому чаті назавжди")
+    else:
+        await message.reply(text=f"{username_or_fullname(reply.from_user)} має ({warned_count}/3) попереджень! ")
+
+
 @dp.message(F.text == "/help")
 async def send_help(message: types.Message):
     help_text = ("**Cписок команд**:\n"
                  "/ban - забанити користувача\n"
                  "/mute - обмежити користувача у правах надсилання повідомлень\n"
-                 "/unban - забанити користувача"
-                 "/unmute - зняти обмеження у користувача у правах надсилання повідомлень"
+                 "/unban - забанити користувача\n"
+                 "/unmute - зняти обмеження у користувача у правах надсилання повідомлень\n"
                  "Команду треба прописати, відповідаючи(reply) на повідомлення користувача, до якого ви "
                  "хочете застосувати відповідну дію\n"
-                 "Також можна прописувати вищезгадані команди зі знаком ! замість / у початку.")
+                 "Також можна прописувати вищезгадані команди зі знаком ! замість / у початку.\n")
 
     await message.answer(help_text)
 
@@ -182,6 +208,7 @@ async def answer_message(message: types.Message):
 
             if user_answer == new_chat_member_dict[message.from_user.id][0]:
                 await message.reply("Правильна відповідь!")
+                db_controller.create_warn_count_row(group_id=message.chat.id, user_id=message.from_user.id)
                 new_chat_member_dict.pop(message.from_user.id)
             else:
                 raise ValueError
