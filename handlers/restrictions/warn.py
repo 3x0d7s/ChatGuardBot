@@ -24,5 +24,6 @@ async def warn(message: types.Message):
             revoke_messages=False
         )
         await message.answer(text=f"{util.username_or_fullname(reply.from_user)} тепер забанений у цьому чаті назавжди")
+        db_controller.delete_warn_count(group_id=message.chat.id, user_id=reply.from_user.id)
     else:
         await message.reply(text=f"{util.username_or_fullname(reply.from_user)} має ({warned_count}/3) попереджень! ")
