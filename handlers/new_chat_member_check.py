@@ -53,6 +53,9 @@ async def greeting_new_members(message: types.Message):
         await message.answer(text=f"Привіт, {util.username_or_fullname(member)}\n"
                                   f"Cкільки буде {first_number} + {second_number}?\n"
                                   "На відповідь дається 1 хвилина")
+
+        await message.delete()
+
         # Створюємо таймер для кожного нового користувача
         await asyncio.create_task(handle_timeout(member, message.chat.id))
 
