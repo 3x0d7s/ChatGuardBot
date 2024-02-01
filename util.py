@@ -15,9 +15,13 @@ def is_bot_in_group_chat(message: types.Message) -> bool:
     return message.chat.id != message.from_user.id
 
 
-async def has_admin_permissions(chat: types.Chat, user: types.User) -> bool:
+async def get_list_of_administators(chat: types.Chat) -> List[Union[ChatMemberOwner, ChatMemberAdministrator]]:
     chat_member_list: List[Union[ChatMemberOwner, ChatMemberAdministrator]] = await chat.get_administrators()
-    admin_users_list = [admin.user for admin in chat_member_list]
+    return chat_member_list
+
+
+async def has_admin_permissions(chat: types.Chat, user: types.User) -> bool:
+    admin_users_list = [admin.user for admin in await get_list_of_administators(chat)]
     return user in admin_users_list
 
 

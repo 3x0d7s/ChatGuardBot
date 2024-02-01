@@ -7,7 +7,7 @@ from aiogram import types
 
 from config import bot
 from handlers import new_chat_member_check
-from handlers.restrictions import ban, mute, warn
+from handlers.restrictions import ban, mute, warn, report
 
 dp = Dispatcher()
 
@@ -28,7 +28,7 @@ async def send_help(message: types.Message):
 
 
 async def main():
-    dp.include_routers(warn.router, ban.router, mute.router, new_chat_member_check.router)
+    dp.include_routers(warn.router, ban.router, mute.router, report.router, new_chat_member_check.router)
     await dp.start_polling(bot)
 
 
