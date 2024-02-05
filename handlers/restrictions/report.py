@@ -1,4 +1,5 @@
 from aiogram import F, types, Router
+from aiogram.filters import Command
 from aiogram.types import TextQuote
 
 import util
@@ -8,7 +9,7 @@ router = Router()
 
 
 @router.message(F.text == "!report")
-@router.message(F.text == "/report")
+@router.message(Command('report'))
 async def report(message: types.Message):
     reply = message.reply_to_message
     if not reply:

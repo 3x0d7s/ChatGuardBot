@@ -1,4 +1,5 @@
 from aiogram import F, types, Router
+from aiogram.filters import Command
 
 from config import db_controller, bot
 import util
@@ -7,7 +8,7 @@ router = Router()
 
 
 @router.message(F.text == "!warn")
-@router.message(F.text == "/warn")
+@router.message(Command('warn'))
 async def warn(message: types.Message):
     if not await util.has_admin_permissions(chat=message.chat, user=message.from_user):
         return

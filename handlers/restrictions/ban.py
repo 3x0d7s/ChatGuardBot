@@ -1,4 +1,5 @@
 from aiogram import F, types, Router
+from aiogram.filters import Command
 
 from config import bot
 import util
@@ -7,7 +8,7 @@ router = Router()
 
 
 @router.message(F.text == "!ban")
-@router.message(F.text == "/ban")
+@router.message(Command('ban'))
 async def ban(message: types.Message):
     if not await util.has_admin_permissions(chat=message.chat, user=message.from_user):
         return
@@ -25,7 +26,7 @@ async def ban(message: types.Message):
 
 
 @router.message(F.text == "!unban")
-@router.message(F.text == "/unban")
+@router.message(Command('unban'))
 async def unban(message: types.Message):
     if not await util.has_admin_permissions(chat=message.chat, user=message.from_user):
         return

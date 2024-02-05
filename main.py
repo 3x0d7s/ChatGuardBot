@@ -2,33 +2,66 @@ import asyncio
 import logging
 import sys
 
-from aiogram import Dispatcher, F
+from aiogram import Dispatcher, F, Bot
 from aiogram import types
+from aiogram.filters import Command
+from aiogram.types import BotCommand
 
 from config import bot
 from handlers import new_chat_member_check
 from handlers.restrictions import ban, mute, warn, report
+from handlers.about import help, description
 
 dp = Dispatcher()
 
 
-@dp.message(F.text == "/help")
-async def send_help(message: types.Message):
-    help_text = ("**Cписок команд**:\n"
-                 "/ban - забанити користувача\n"
-                 "/mute - обмежити користувача у правах надсилання повідомлень\n"
-                 "/unban - забанити користувача\n"
-                 "/unmute - зняти обмеження у користувача у правах надсилання повідомлень\n"
-                 "/warn - попередження\n"
-                 "Команду треба прописати, відповідаючи(reply) на повідомлення користувача, до якого ви "
-                 "хочете застосувати відповідну дію\n"
-                 "Також можна прописувати вищезгадані команди зі знаком ! замість / у початку.\n")
-
-    await message.answer(help_text)
+async def set_commands(bot: Bot):
+    commands = [
+        BotCommand(
+            command='help',
+            description="Cписок доступних команд"
+        ),
+        BotCommand(
+            command='description',
+            description="Короткий опис того, для чого потрібний цей бот."
+        ),
+        BotCommand(
+            command='ban',
+            description="Заблокувати користувача у цій групі."
+        ),
+        BotCommand(
+            command='mute',
+            description="Обмежити користувача у правах надсилання повідомлень."
+        ),
+        BotCommand(
+            command='unban',
+            description="Зняти блокування користувача у цій групі."
+        ),
+        BotCommand(
+            command='unmute',
+            description="Зняти обмеження у користувача у правах надсилання повідомлень."
+        ),
+        BotCommand(
+            command='warn',
+            description="Попередження(якщо користувач отримує 3 попередження, його заблокуюють)."
+        ),
+        BotCommand(
+            command='report',
+            description="Кинути скаргу на користувача за надіслане ним повідомлення."
+        )
+    ]
+    await bot.set_my_commands(commands=commands)
 
 
 async def main():
-    dp.include_routers(warn.router, ban.router, mute.router, report.router, new_chat_member_check.router)
+    dp.include_routers(warn.router,
+                       ban.router,
+                       mute.router,
+                       report.router,
+                       help.router,
+                       description.router,
+                       new_chat_member_check.router,)
+    await set_commands(bot)
     await dp.start_polling(bot)
 
 

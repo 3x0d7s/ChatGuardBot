@@ -37,7 +37,8 @@ async def handle_timeout(user: types.User, chat_id: int):
     if user.id not in new_chat_member_dict:
         return
 
-    await block_user_after_timeout(user, chat_id, time_delta)
+    duration = datetime.timedelta(days=5)
+    await block_user_after_timeout(user, chat_id, duration)
 
 
 @router.message(F.new_chat_members)
