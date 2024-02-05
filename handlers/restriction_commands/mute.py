@@ -1,4 +1,4 @@
-from aiogram import F, types, Router
+from aiogram import types, Router
 from aiogram.filters import Command
 
 import util
@@ -7,8 +7,7 @@ from config import bot
 router = Router()
 
 
-@router.message(F.text == "!mute")
-@router.message(Command('mute'))
+@router.message(Command('mute', prefix='/!'))
 async def mute(message: types.Message):
     if not await util.has_admin_permissions(chat=message.chat, user=message.from_user):
         return
@@ -22,12 +21,17 @@ async def mute(message: types.Message):
         user_id=reply.from_user.id,
         permissions=types.chat_permissions.ChatPermissions(can_send_messages=False)
     )
-    await message.answer(
-        text=f"{util.username_or_fullname(reply.from_user)} тепер обмежений у правах надсилати повідомлення!")
+
+    msg_text = message.text[1:]  # remove / or ! prefix
+    response = f"{util.username_or_fullname(reply.from_user)} тепер обмежений у правах надсилати повідомлення!"
+    if not msg_text.lstrip('mute').isspace():
+        reason = msg_text.lstrip("mute\n")
+        response = f"{response}\n**Причина**: {reason}"
+
+    await message.answer(text=response)
 
 
-@router.message(F.text == "!unmute")
-@router.message(Command('unmute'))
+@router.message(Command('unmute', prefix='/!'))
 async def unmute(message: types.Message):
     if not await util.has_admin_permissions(chat=message.chat, user=message.from_user):
         return

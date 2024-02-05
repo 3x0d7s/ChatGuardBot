@@ -9,7 +9,7 @@ from aiogram.types import BotCommand
 
 from config import bot
 from handlers import new_chat_member_check
-from handlers.restrictions import ban, mute, warn, report
+from handlers.restriction_commands import ban, mute, warn, report
 from handlers.about import help, description
 
 dp = Dispatcher()

@@ -1,14 +1,13 @@
-from aiogram import F, types, Router
+from aiogram import types, Router
 from aiogram.filters import Command
 
-from config import bot
 import util
+from config import bot
 
 router = Router()
 
 
-@router.message(F.text == "!ban")
-@router.message(Command('ban'))
+@router.message(Command('ban', prefix='/!'))
 async def ban(message: types.Message):
     if not await util.has_admin_permissions(chat=message.chat, user=message.from_user):
         return
@@ -22,11 +21,17 @@ async def ban(message: types.Message):
         user_id=reply.from_user.id,
         revoke_messages=False
     )
-    await message.answer(text=f"{util.username_or_fullname(reply.from_user)} тепер забанений у цьому чаті назавжди")
+
+    msg_text = message.text[1:]  # remove / or ! prefix
+    response = f"{util.username_or_fullname(reply.from_user)} тепер заблокований у цьому чаті назавжди!"
+    if not msg_text.lstrip('ban').isspace():
+        reason = msg_text.lstrip("ban\n")
+        response = f"{response}\n**Причина**: {reason}"
+
+    await message.answer(text=response)
 
 
-@router.message(F.text == "!unban")
-@router.message(Command('unban'))
+@router.message(Command('unban', prefix='/!'))
 async def unban(message: types.Message):
     if not await util.has_admin_permissions(chat=message.chat, user=message.from_user):
         return
