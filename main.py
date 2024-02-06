@@ -2,15 +2,13 @@ import asyncio
 import logging
 import sys
 
-from aiogram import Dispatcher, F, Bot
-from aiogram import types
-from aiogram.filters import Command
+from aiogram import Dispatcher, Bot
 from aiogram.types import BotCommand
 
 from config import bot
-from handlers import new_chat_member_check
-from handlers.restriction_commands import ban, mute, warn, report
-from handlers.about import help, description
+from handlers.chat_members_actions import new_chat_member, left_chat_member
+from handlers.commands.restrictions import ban, mute, warn, report
+from handlers.commands.about import description, help
 
 dp = Dispatcher()
 
@@ -60,7 +58,8 @@ async def main():
                        report.router,
                        help.router,
                        description.router,
-                       new_chat_member_check.router,)
+                       left_chat_member.router,
+                       new_chat_member.router)
     await set_commands(bot)
     await dp.start_polling(bot)
 
