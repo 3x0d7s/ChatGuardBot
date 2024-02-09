@@ -23,7 +23,7 @@ async def mute(message: types.Message):
     )
 
     msg_text = message.text[1:]  # remove / or ! prefix
-    response = f"{util.username_or_fullname(reply.from_user)} тепер обмежений у правах надсилати повідомлення!"
+    response = f"{util.mention_user(reply.from_user)} тепер обмежений у правах надсилати повідомлення!"
     if not msg_text.lstrip('mute').isspace():
         reason = msg_text.lstrip("mute\n")
         response = f"{response}\n**Причина**: {reason}"

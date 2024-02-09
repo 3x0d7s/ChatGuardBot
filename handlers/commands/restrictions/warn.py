@@ -18,7 +18,7 @@ async def warn(message: types.Message):
 
     warned_count = db_controller.warn_user(group_id=message.chat.id, user_id=reply.from_user.id)
 
-    response = f"{util.username_or_fullname(reply.from_user)} має ({warned_count}/3) попереджень! "
+    response = f"{util.mention_user(reply.from_user)} має ({warned_count}/3) попереджень! "
     msg_text = message.text[1:]  # remove / or ! prefix
     if not msg_text.lstrip('warn').isspace():
         reason = msg_text.lstrip("warn\n")
@@ -32,5 +32,5 @@ async def warn(message: types.Message):
             user_id=reply.from_user.id,
             revoke_messages=False
         )
-        await message.answer(text=f"{util.username_or_fullname(reply.from_user)} тепер заблокований у цьому чаті назавжди!")
+        await message.answer(text=f"{util.mention_user(reply.from_user)} тепер заблокований у цьому чаті назавжди!")
         db_controller.delete_warn_count(group_id=message.chat.id, user_id=reply.from_user.id)

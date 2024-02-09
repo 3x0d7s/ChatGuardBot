@@ -24,7 +24,7 @@ async def block_user_after_timeout(user: types.User, chat_id: int, duration: dat
 
     await bot.send_message(
         chat_id,
-        f"{util.username_or_fullname(user)} не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде "
+        f"{util.mention_user(user)} не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде "
         f"заблокований до {block_date.strftime('%d/%m/%Y %H:%M')}"
     )
     await bot.ban_chat_member(
@@ -57,7 +57,7 @@ async def welcome_new_members(message: types.Message):
     new_chat_member_list = message.new_chat_members
     for member in new_chat_member_list:
         first_number, second_number, user_answer = util.generate_math_question()
-        welcome_msg = await message.answer(text=f"Привіт, {util.username_or_fullname(member)}\n"
+        welcome_msg = await message.answer(text=f"Привіт, {util.mention_user(member)}\n"
                                                 f"Cкільки буде {first_number} + {second_number}?\n"
                                                 "На відповідь дається 1 хвилина")
         new_chat_member_dict[member.id] = NewUser(chat_id=message.chat.id,

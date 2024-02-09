@@ -13,10 +13,10 @@ async def report(message: types.Message):
     if not reply:
         return
 
-    response = (f'{util.username_or_fullname(message.from_user)} '
+    response = (f'{util.mention_user(message.from_user)} '
                 'відправив скаргу на '
-                f'{util.username_or_fullname(reply.from_user)}\n'
-                f'Чат {message.chat.full_name}\n')
+                f'{util.mention_user(reply.from_user)}\n'
+                f'Група {message.chat.full_name}\n')
 
     msg_text = message.text[1:]  # remove / or ! prefix
     if not msg_text.lstrip('report').isspace():
@@ -25,7 +25,7 @@ async def report(message: types.Message):
 
     await message.reply(text=response)
 
-    administrator_list = await util.get_list_of_administators(message.chat)
+    administrator_list = await util.get_list_of_administrators(message.chat)
 
     for administrator in administrator_list:
         user = administrator.user
