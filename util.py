@@ -11,6 +11,13 @@ def mention_user(user: types.User) -> str:
     return f"[{user.full_name}](tg://user?id={user.id})"
 
 
+def group_link(chat: types.Chat) -> str:
+    if chat.username:
+        return f"https://t.me/{chat.username}"
+    chat_id = chat.id[2:]
+    return f"https://t.me/c/{chat_id}"
+
+
 def message_link(message: types.Message) -> str:
     if message.chat.username:
         if message.chat.is_forum:

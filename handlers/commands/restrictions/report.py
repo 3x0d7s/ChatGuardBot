@@ -15,15 +15,18 @@ async def report(message: types.Message):
 
     response = (f'{util.mention_user(message.from_user)} '
                 'відправив скаргу на '
-                f'{util.mention_user(reply.from_user)}\n'
-                f'Група {message.chat.full_name}\n')
+                f'{util.mention_user(reply.from_user)}\n\n')
 
     msg_text = message.text[1:]  # remove / or ! prefix
-    if not msg_text.lstrip('report').isspace():
-        reason = msg_text.lstrip("report\n")
-        response = f"{response}\n**Причина**: {reason}"
+    msg_text = msg_text.lstrip('report')
+    if msg_text and not msg_text.isspace():
+        reason = msg_text.lstrip("\n")
+        response = f"{response}**Причина**:{reason}\n"
 
     await message.reply(text=response)
+
+    response += (f'Група: [{message.chat.full_name}]({util.group_link(message.chat)})\n'
+                 f'[Посилання на повідомлення]({util.message_link(reply)})')
 
     administrator_list = await util.get_list_of_administrators(message.chat)
 
