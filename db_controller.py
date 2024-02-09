@@ -17,17 +17,7 @@ class DbController:
                                 warn_count INTEGER
                             );
                         '''
-        # create_restriction_table = '''
-        #                     CREATE TABLE IF NOT EXISTS Restrictions (
-        #                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        #                         group_id INTEGER,
-        #                         user_id INTEGER,
-        #                         restriction_type VARCHAR
-        #                         datetime date
-        #                         );
-        #                         '''
         self.cursor.execute(create_warn_count_table)
-        # self.cursor.execute(create_restriction_table)
         self.conn.commit()
 
     def create_warn_count_row(self, group_id, user_id):

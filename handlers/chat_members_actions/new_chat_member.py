@@ -6,6 +6,14 @@ from aiogram import types, F, Router
 import util
 from config import bot, db_controller
 
+
+class NewUser:
+    def __init__(self, chat_id, message_id, answer):
+        self.chat_id = chat_id
+        self.message_id = message_id
+        self.answer = answer
+
+
 new_chat_member_dict = dict()
 
 router = Router()
@@ -42,19 +50,19 @@ async def handle_timeout(user: types.User, chat_id: int):
 
 
 @router.message(F.new_chat_members)
-async def greeting_new_members(message: types.Message):
+async def welcome_new_members(message: types.Message):
     if not util.is_bot_in_group_chat(message):
         return
 
     new_chat_member_list = message.new_chat_members
     for member in new_chat_member_list:
         first_number, second_number, user_answer = util.generate_math_question()
-        new_chat_member_dict[member.id] = (user_answer,
-                                           datetime.datetime.now() + datetime.timedelta(minutes=1))
-        await message.answer(text=f"Привіт, {util.username_or_fullname(member)}\n"
-                                  f"Cкільки буде {first_number} + {second_number}?\n"
-                                  "На відповідь дається 1 хвилина")
-
+        welcome_msg = await message.answer(text=f"Привіт, {util.username_or_fullname(member)}\n"
+                                                f"Cкільки буде {first_number} + {second_number}?\n"
+                                                "На відповідь дається 1 хвилина")
+        new_chat_member_dict[member.id] = NewUser(chat_id=message.chat.id,
+                                                  message_id=welcome_msg.message_id,
+                                                  answer=user_answer)
         await message.delete()
 
         # Створюємо таймер для кожного нового користувача
@@ -70,11 +78,15 @@ async def answer_message(message: types.Message):
         try:
             user_answer = int(message.text.strip())
 
-            if user_answer == new_chat_member_dict[message.from_user.id][0]:
-                await message.reply("Правильна відповідь!")
+            if user_answer == new_chat_member_dict[message.from_user.id].answer:
+                # await message.reply("Правильна відповідь!")
                 db_controller.create_warn_count_row(group_id=message.chat.id, user_id=message.from_user.id)
-                new_chat_member_dict.pop(message.from_user.id)
             else:
                 raise ValueError
         except ValueError:
             await block_user_after_timeout(message.from_user, message.chat.id, datetime.timedelta(days=5))
+        finally:
+            user = new_chat_member_dict[message.from_user.id]
+            await bot.delete_message(chat_id=user.chat_id, message_id=user.message_id)
+            await message.delete()
+            new_chat_member_dict.pop(message.from_user.id)
