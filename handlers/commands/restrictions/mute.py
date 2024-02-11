@@ -22,11 +22,13 @@ async def mute(message: types.Message):
         permissions=types.chat_permissions.ChatPermissions(can_send_messages=False)
     )
 
-    msg_text = message.text[1:]  # remove / or ! prefix
     response = f"{util.mention_user(reply.from_user)} тепер обмежений у правах надсилати повідомлення!"
-    if not msg_text.lstrip('mute').isspace():
-        reason = msg_text.lstrip("mute\n")
-        response = f"{response}\n**Причина**: {reason}"
+
+    msg_text = message.text[1:]  # remove / or ! prefix
+    msg_text = msg_text.lstrip('mute')
+    if msg_text and not msg_text.isspace():
+        reason = msg_text.lstrip("\n")
+        response = f"{response}\n**Причина**:{reason}"
 
     await message.answer(text=response)
 

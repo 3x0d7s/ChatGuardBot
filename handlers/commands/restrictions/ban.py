@@ -22,10 +22,12 @@ async def ban(message: types.Message):
         revoke_messages=False
     )
 
-    msg_text = message.text[1:]  # remove / or ! prefix
     response = f"{util.mention_user(reply.from_user)} тепер заблокований у цьому чаті назавжди!"
-    if not msg_text.lstrip('ban').isspace():
-        reason = msg_text.lstrip("ban\n")
+
+    msg_text = message.text[1:]  # remove / or ! prefix
+    msg_text = msg_text.lstrip('ban')
+    if msg_text and not msg_text.isspace():
+        reason = msg_text.lstrip("\n")
         response = f"{response}\n**Причина**: {reason}"
 
     await message.answer(text=response)
