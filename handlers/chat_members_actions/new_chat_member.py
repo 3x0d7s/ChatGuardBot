@@ -33,16 +33,16 @@ async def block_user_after_timeout(user: types.User, chat_id: int, duration: dat
         until_date=duration,
         revoke_messages=False
     )
-    new_chat_member_dict.pop(user.id)
+    new_chat_member_dict[chat_id].pop(user.id)
 
 
 async def handle_timeout(user: types.User, chat_id: int):
     time_delta = datetime.timedelta(minutes=1)
     block_time = datetime.datetime.now() + time_delta
 
-    while user.id in new_chat_member_dict and datetime.datetime.now() < block_time:
+    while user.id in new_chat_member_dict[chat_id] and datetime.datetime.now() < block_time:
         await asyncio.sleep(1)
-    if user.id not in new_chat_member_dict:
+    if user.id not in new_chat_member_dict[chat_id]:
         return
 
     duration = datetime.timedelta(days=5)
@@ -60,33 +60,33 @@ async def welcome_new_members(message: types.Message):
         welcome_msg = await message.answer(text=f"Привіт, {util.mention_user(member)}\n"
                                                 f"Cкільки буде {first_number} + {second_number}?\n"
                                                 "На відповідь дається 1 хвилина")
-        new_chat_member_dict[member.id] = NewUser(chat_id=message.chat.id,
-                                                  message_id=welcome_msg.message_id,
-                                                  answer=user_answer)
+        if message.chat.id not in new_chat_member_dict:
+            new_chat_member_dict[message.chat.id] = {}
+        new_chat_member_dict[message.chat.id][member.id] = NewUser(chat_id=message.chat.id,
+                                                                   message_id=welcome_msg.message_id,
+                                                                   answer=user_answer)
         await message.delete()
 
         # Створюємо таймер для кожного нового користувача
         await asyncio.create_task(handle_timeout(member, message.chat.id))
 
 
-@router.message()
+@router.message(F.func(lambda msg: msg.from_user.id in new_chat_member_dict[msg.chat.id]))
 async def answer_message(message: types.Message):
     if not util.is_bot_in_group_chat(message):
         return
 
-    if message.from_user.id in new_chat_member_dict:
-        try:
-            user_answer = int(message.text.strip())
-
-            if user_answer == new_chat_member_dict[message.from_user.id].answer:
-                # await message.reply("Правильна відповідь!")
-                db_controller.create_warn_count_row(group_id=message.chat.id, user_id=message.from_user.id)
-            else:
-                raise ValueError
-        except ValueError:
-            await block_user_after_timeout(message.from_user, message.chat.id, datetime.timedelta(days=5))
-        finally:
-            user = new_chat_member_dict[message.from_user.id]
-            await bot.delete_message(chat_id=user.chat_id, message_id=user.message_id)
-            await message.delete()
-            new_chat_member_dict.pop(message.from_user.id)
+    try:
+        user_answer = int(message.text.strip())
+        if user_answer == new_chat_member_dict[message.chat.id][message.from_user.id].answer:
+            # await message.reply("Правильна відповідь!")
+            db_controller.create_warn_count_row(group_id=message.chat.id, user_id=message.from_user.id)
+        else:
+            raise ValueError
+    except ValueError:
+        await block_user_after_timeout(message.from_user, message.chat.id, datetime.timedelta(days=5))
+    finally:
+        user = new_chat_member_dict[message.chat.id][message.from_user.id]
+        await bot.delete_message(chat_id=user.chat_id, message_id=user.message_id)
+        await message.delete()
+        new_chat_member_dict[message.chat.id].pop(message.from_user.id)
