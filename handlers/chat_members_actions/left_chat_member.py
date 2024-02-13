@@ -1,6 +1,6 @@
 from aiogram import types, F, Router
 
-from config import db_controller
+from bot import db_controller
 
 router = Router()
 

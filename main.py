@@ -5,7 +5,7 @@ import sys
 from aiogram import Dispatcher, Bot
 from aiogram.types import BotCommand
 
-from config import bot
+from bot import bot
 from handlers.chat_members_actions import new_chat_member, left_chat_member
 from handlers.commands.restrictions import ban, mute, warn, report
 from handlers.commands.about import description, help

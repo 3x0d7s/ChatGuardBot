@@ -4,7 +4,7 @@ import datetime
 from aiogram import types, F, Router
 
 import util
-from config import bot, db_controller
+from bot import bot, db_controller
 
 
 class NewUser:

@@ -2,7 +2,7 @@ from aiogram import types, Router
 from aiogram.filters import Command
 
 import util
-from config import db_controller, bot
+from bot import db_controller, bot
 
 router = Router()
 
