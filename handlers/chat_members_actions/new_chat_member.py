@@ -14,11 +14,6 @@ class NewUser:
         self.answer = answer
 
 
-# new_chat_member_dict = dict()
-
-# async def start_block_member_task():
-#     await asyncio.create_task(handle_new_chat_members())
-
 router = Router()
 
 
@@ -36,21 +31,8 @@ async def block_member_after_timeout(user: types.User, chat_id: int, duration: d
         until_date=duration,
         revoke_messages=False
     )
-    # new_chat_member_dict[chat_id].pop(user.id)
     # db_controller.delete_non_responded_new_members()
 
-
-# async def handle_timeout(user: types.User, chat_id: int):
-#     time_delta = datetime.timedelta(minutes=1)
-#     block_time = datetime.datetime.now() + time_delta
-#
-#     # while user.id in new_chat_member_dict[chat_id] and datetime.datetime.now() < block_time:
-#     #     await asyncio.sleep(1)
-#     # if user.id not in new_chat_member_dict[chat_id]:
-#     #     return
-#
-#     duration = datetime.timedelta(days=5)
-#     await block_user_after_timeout(user, chat_id, duration)
 
 async def handle_new_chat_members():
     while True:
@@ -71,18 +53,14 @@ async def welcome_new_members(message: types.Message):
     for member in new_chat_member_list:
         first_number, second_number, user_answer = util.generate_math_question()
         welcome_message = await message.answer(text=f"Привіт, {util.mention_user(member)}\n"
-                                                f"Cкільки буде {first_number} + {second_number}?\n"
-                                                "На відповідь дається 1 хвилина")
+                                                    f"Cкільки буде {first_number} + {second_number}?\n"
+                                                    "На відповідь дається 1 хвилина")
         db_controller.create_new_member_row(chat_id=message.chat.id,
                                             user_id=member.id,
                                             answer=user_answer,
-                                            question_message_id = welcome_message.message_id,
+                                            question_message_id=welcome_message.message_id,
                                             restriction_date=datetime.datetime.now() + datetime.timedelta(minutes=1))
         await message.delete()
-
-        # Створюємо таймер для кожного нового користувача
-        # await asyncio.create_task(handle_timeout(member, message.chat.id))
-        # await asyncio.create_task(handle_new_chat_members())
 
 
 @router.message(F.func(
@@ -106,6 +84,3 @@ async def answer_message(message: types.Message):
         await bot.delete_message(chat_id=message.chat.id, message_id=question_message_id)
         await message.delete()
         db_controller.delete_new_member(chat_id=message.chat.id, user_id=user.id)
-
-
-# asyncio.create_task(handle_new_chat_members())
