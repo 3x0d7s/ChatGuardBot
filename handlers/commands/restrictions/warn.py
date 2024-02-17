@@ -16,7 +16,7 @@ async def warn(message: types.Message):
     if not reply:
         return
 
-    warned_count = db_controller.warn_user(group_id=message.chat.id, user_id=reply.from_user.id)
+    warned_count = db_controller.warn_user(chat_id=message.chat.id, user_id=reply.from_user.id)
 
     response = f"{util.mention_user(reply.from_user)} має ({warned_count}/3) попереджень! "
 
@@ -35,4 +35,4 @@ async def warn(message: types.Message):
             revoke_messages=False
         )
         await message.answer(text=f"{util.mention_user(reply.from_user)} тепер заблокований у цьому чаті назавжди!")
-        db_controller.delete_warn_count(group_id=message.chat.id, user_id=reply.from_user.id)
+        db_controller.delete_warn_count_row(chat_id=message.chat.id, user_id=reply.from_user.id)

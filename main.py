@@ -62,6 +62,7 @@ async def main():
                        new_chat_member.router)
     await set_commands(bot)
     await dp.start_polling(bot)
+    await asyncio.create_task(new_chat_member.handle_new_chat_members())
 
 
 if __name__ == '__main__':
