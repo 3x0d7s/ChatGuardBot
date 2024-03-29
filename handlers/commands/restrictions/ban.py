@@ -30,7 +30,7 @@ async def ban(message: types.Message):
         reason = msg_text.lstrip("\n")
         response = f"{response}\n**Причина**: {reason}"
 
-    await message.answer(text=response)
+    await bot.send_message(chat_id=message.chat.id, text=response)
 
 
 @router.message(Command('unban', prefix='/!'))
