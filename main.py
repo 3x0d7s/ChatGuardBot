@@ -7,8 +7,8 @@ from aiogram.types import BotCommand
 
 from bot import bot
 from handlers.chat_members_actions import new_chat_member, left_chat_member
-from handlers.commands.restrictions import ban, mute, warn, report
 from handlers.commands.about import description, help
+from handlers.commands.restrictions import ban, mute, warn, report
 
 dp = Dispatcher()
 
@@ -62,7 +62,7 @@ async def main():
                        new_chat_member.router)
     await set_commands(bot)
     await dp.start_polling(bot)
-    await asyncio.create_task(new_chat_member.handle_new_chat_members())
+    # await asyncio.create_task(new_chat_member.handle_new_chat_members())
 
 
 if __name__ == '__main__':
