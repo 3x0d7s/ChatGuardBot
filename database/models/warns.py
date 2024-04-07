@@ -30,11 +30,16 @@ class Warns(Base):
 
     @classmethod
     def increase(cls, chat_member: ChatMember, session: Session):
+        (session.query(cls)
+                .filter_by(chat_member_id=chat_member.id)
+                .update({'warn_count': cls.warn_count + 1}))
+        session.commit()
         return (session.query(cls)
-                  .filter_by(chat_member_id=chat_member.id)
-                  .update({'warn_count': cls.warn_count + 1}))
+                .filter_by(chat_member_id=chat_member.id)
+                .one()
+                .warn_count)
 
     @classmethod
     def delete(cls, chat_member: ChatMember, session: Session):
-        session.query(cls).filter(chat_member_id=chat_member.id).delete()
+        session.query(cls).filter_by(chat_member_id=chat_member.id).delete()
         session.commit()

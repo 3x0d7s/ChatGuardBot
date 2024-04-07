@@ -7,12 +7,16 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQu
 
 import util
 from bot import bot
+from database.config import Sessions
+from database.models.chat_member import ChatMember
+from database.models.warns import Warns
 
 router = Router()
 
 
 class Action(str, Enum):
     ban = "ban"
+    mute = "mute"
     warn = "warn"
 
 
@@ -28,13 +32,16 @@ def report_btn_markup(chat_id: int, user_id: int, reason: str) -> InlineKeyboard
         text="Warn",
         callback_data=AdminAction(action="warn", chat_id=chat_id, user_id=user_id, reason=reason).pack()
     )
+    mute_btn = InlineKeyboardButton(
+        text="Mute",
+        callback_data=AdminAction(action="mute", chat_id=chat_id, user_id=user_id, reason=reason).pack()
+    )
     ban_btn = InlineKeyboardButton(
         text="Ban",
         callback_data=AdminAction(action="ban", chat_id=chat_id, user_id=user_id, reason=reason).pack()
     )
 
-    cols = [warn_btn, ban_btn]
-    rows = [cols]
+    rows = [[warn_btn], [mute_btn, ban_btn]]
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -75,8 +82,6 @@ async def report(message: types.Message):
 
 @router.callback_query(AdminAction.filter(F.action == Action.ban))
 async def ban_user(query: CallbackQuery, callback_data: AdminAction, bot: Bot):
-    user = query.from_user.id
-
     await bot.ban_chat_member(
         chat_id=callback_data.chat_id,
         user_id=callback_data.user_id,
@@ -89,3 +94,44 @@ async def ban_user(query: CallbackQuery, callback_data: AdminAction, bot: Bot):
     response = f"{response}\n**Причина**: {callback_data.reason}"
 
     await bot.send_message(chat_id=callback_data.chat_id, text=response)
+
+
+@router.callback_query(AdminAction.filter(F.action == Action.mute))
+async def mute_user(query: CallbackQuery, callback_data: AdminAction, bot: Bot):
+    await bot.restrict_chat_member(
+        chat_id=callback_data.chat_id,
+        user_id=callback_data.user_id,
+        permissions=types.chat_permissions.ChatPermissions(can_send_messages=False)
+    )
+
+    chat_member_user = await bot.get_chat_member(chat_id=callback_data.chat_id, user_id=callback_data.user_id)
+
+    response = f"{util.mention_user(chat_member_user.user)} тепер обмежений у правах надсилати повідомлення!"
+    response = f"{response}\n**Причина**: {callback_data.reason}"
+
+    await bot.send_message(chat_id=callback_data.chat_id, text=response)
+
+
+@router.callback_query(AdminAction.filter(F.action == Action.warn))
+async def warn_user(query: CallbackQuery, callback_data: AdminAction, bot: Bot):
+    with Sessions() as session:
+        chat_member = ChatMember.ensure_entity(chat_id=callback_data.chat_id,
+                                               user_id=callback_data.user_id,
+                                               session=session)
+        warned_count = Warns.increase(chat_member=chat_member, session=session)
+
+        chat_member_user = await bot.get_chat_member(chat_id=callback_data.chat_id, user_id=callback_data.user_id)
+
+        response = f"{util.mention_user(chat_member_user.user)} має {warned_count}/3 попереджень! "
+
+        await bot.send_message(chat_id=callback_data.chat_id, text=response)
+
+        if warned_count >= 3:
+            await bot.ban_chat_member(
+                chat_id=callback_data.chat_id,
+                user_id=callback_data.user_id,
+                revoke_messages=False
+            )
+            await bot.send_message(chat_id=callback_data.chat_id,
+                                   text=f"{util.mention_user(chat_member_user.user)} тепер заблокований у цьому чаті назавжди!")
+            Warns.delete(chat_member=chat_member, session=session)

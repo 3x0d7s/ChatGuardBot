@@ -21,7 +21,7 @@ async def warn(message: types.Message):
 
     with Sessions() as session:
         chat_member = ChatMember.ensure_entity(chat_id=message.chat.id,
-                                               user_id=message.from_user.id,
+                                               user_id=reply.from_user.id,
                                                session=session)
         warned_count = Warns.increase(chat_member=chat_member, session=session)
 
