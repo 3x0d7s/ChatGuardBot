@@ -26,3 +26,7 @@ class ChatMember(Base):
             session.add(entity)
         return entity
 
+    @classmethod
+    def get_by_id(cls, id: int, session: Session):
+        entity = session.query(cls).filter_by(id=id).first()
+        return entity

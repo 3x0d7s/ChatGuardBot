@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import List
 
 from sqlalchemy import Column, Integer, ForeignKey, Date, delete
 from sqlalchemy.orm import relationship, Session
@@ -48,3 +49,12 @@ class NewChatMember(Base):
     def delete(cls, chat_member_id: int, session: Session):
         session.query(cls).filter_by(chat_member_id=chat_member_id).delete()
         session.commit()
+
+    @classmethod
+    def pop_old_records(cls, session: Session):
+        current_date = datetime.now().date()
+        old_records = session.query(cls).filter(cls.restriction_date < current_date).all()
+        for record in old_records:
+            session.delete(record)
+        session.commit()
+        return old_records

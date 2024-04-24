@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from aiogram import types, F, Router
@@ -29,14 +30,17 @@ async def block_member_after_timeout(user: types.User, chat_id: int, duration: d
     )
 
 
-# async def handle_new_chat_members():
-#     while True:
-#         # await asyncio.sleep(60)
-#         non_responded_new_member_list = db_controller.pop_non_responded_new_member_entities()
-#         for new_member in non_responded_new_member_list:
-#             chat_id = new_member[1]
-#             user = bot.get_chat_member(chat_id=chat_id, user_id=new_member[0])
-#             await block_member_after_timeout(user=user, chat_id=chat_id)
+async def handle_new_chat_members():
+    while True:
+        await asyncio.sleep(60)
+        with Sessions() as session:
+            old_records = NewChatMember.pop_old_records(session)
+            for old_record in old_records:
+                user_entry = ChatMember.get_by_id(old_record.chat_member_id, session=session)
+                user = bot.get_chat_member(chat_id=user_entry.chat_id, user_id=user_entry.user_id)
+                await block_member_after_timeout(user=user,
+                                                 chat_id=user_entry.chat_id,
+                                                 duration=datetime.timedelta(days=5))
 
 
 @router.message(F.new_chat_members)
