@@ -3,7 +3,7 @@ from aiogram.filters import Command
 
 import util
 from bot import bot
-from database.config import Sessions
+from database.config import sessionmaker
 from database.models.chat_member import ChatMember
 from database.models.warns import Warns
 
@@ -19,11 +19,11 @@ async def warn(message: types.Message):
     if not reply:
         return
 
-    with Sessions() as session:
-        chat_member = ChatMember.ensure_entity(chat_id=message.chat.id,
+    async with sessionmaker() as session:
+        chat_member = await ChatMember.ensure_entity(chat_id=message.chat.id,
                                                user_id=reply.from_user.id,
                                                session=session)
-        warned_count = Warns.increase(chat_member=chat_member, session=session)
+        warned_count = await Warns.increase(chat_member=chat_member, session=session)
 
         response = f"{util.mention_user(reply.from_user)} має {warned_count}/3 попереджень! "
 
@@ -42,4 +42,4 @@ async def warn(message: types.Message):
                 revoke_messages=False
             )
             await message.answer(text=f"{util.mention_user(reply.from_user)} тепер заблокований у цьому чаті назавжди!")
-            Warns.delete(chat_member=chat_member, session=session)
+            await Warns.delete(chat_member=chat_member, session=session)

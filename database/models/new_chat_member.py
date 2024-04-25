@@ -2,7 +2,9 @@ from datetime import datetime, timedelta
 from typing import List
 
 from sqlalchemy import Column, Integer, ForeignKey, Date, delete
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import relationship, Session
+from sqlalchemy import select, delete
 
 from database.models.chat_member import ChatMember
 from database.config import Base
@@ -26,35 +28,56 @@ class NewChatMember(Base):
         self.restriction_date = datetime.now() + timedelta(minutes=1)
 
     @classmethod
-    def is_(cls, chat_id: int, user_id: int, session: Session) -> bool:
-        return cls.of(
-            ChatMember.ensure_entity(
+    async def is_(cls, chat_id: int, user_id: int, session: AsyncSession) -> bool:
+        return await cls.of(
+            await ChatMember.ensure_entity(
                 chat_id=chat_id, user_id=user_id, session=session), session=session) is not None
 
     @classmethod
-    def of(cls, chat_member: ChatMember, session: Session):
-        return session.query(cls).filter_by(chat_member_id=chat_member.id).first()
+    async def of(cls, chat_member: ChatMember, session: AsyncSession):
+        # return session.query(cls).filter_by(chat_member_id=chat_member.id).first()
+        async with session:
+            query = select(cls).filter_by(chat_member_id=chat_member.id)
+            result = await session.execute(query)
+            return result.scalar()
 
     @classmethod
-    def insert(cls,
-               chat_member: ChatMember,
-               user_answer: int,
-               question_message_id: int,
-               session: Session):
-        session.add(cls(chat_member_id=chat_member.id,
-                        user_answer=user_answer,
-                        question_message_id=question_message_id))
+    async def insert(cls,
+                     chat_member: ChatMember,
+                     user_answer: int,
+                     question_message_id: int,
+                     session: AsyncSession):
+        async with session:
+            session.add(cls(chat_member_id=chat_member.id,
+                            user_answer=user_answer,
+                            question_message_id=question_message_id))
+            await session.commit()
 
     @classmethod
-    def delete(cls, chat_member_id: int, session: Session):
-        session.query(cls).filter_by(chat_member_id=chat_member_id).delete()
-        session.commit()
+    async def delete(cls, chat_member_id: int, session: AsyncSession):
+        async with session:
+            query = select(cls).filter_by(chat_member_id=chat_member_id)
+            selected = (await session.execute(query)).scalar()
+            await session.delete(selected)
+            await session.commit()
+
+            # session.delete(cls).filter_by(chat_member_id=chat_member_id)
+            # await session.commit()
 
     @classmethod
-    def pop_old_records(cls, session: Session):
-        current_date = datetime.now().date()
-        old_records = session.query(cls).filter(cls.restriction_date < current_date).all()
-        for record in old_records:
-            session.delete(record)
-        session.commit()
-        return old_records
+    async def pop_old_records(cls, session: AsyncSession):
+        async with session:
+            current_date = datetime.now().date()
+
+            # old_records = session.query(cls).filter(cls.restriction_date < current_date).all()
+            # for record in old_records:
+            #     session.delete(record)
+            # session.commit()
+            # return old_records
+
+            statement = select(cls).where(cls.restriction_date < current_date)
+            entities = await session.execute(statement)
+            for entity in entities.all():
+                await session.delete(entity)
+            await session.commit()
+            return entities

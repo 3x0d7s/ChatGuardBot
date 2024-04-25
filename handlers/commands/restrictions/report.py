@@ -7,7 +7,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQu
 
 import util
 from bot import bot
-from database.config import Sessions
+from database.config import sessionmaker
 from database.models.chat_member import ChatMember
 from database.models.warns import Warns
 
@@ -114,11 +114,11 @@ async def mute_user(query: CallbackQuery, callback_data: AdminAction, bot: Bot):
 
 @router.callback_query(AdminAction.filter(F.action == Action.warn))
 async def warn_user(query: CallbackQuery, callback_data: AdminAction, bot: Bot):
-    with Sessions() as session:
-        chat_member = ChatMember.ensure_entity(chat_id=callback_data.chat_id,
+    async with sessionmaker() as session:
+        chat_member = await ChatMember.ensure_entity(chat_id=callback_data.chat_id,
                                                user_id=callback_data.user_id,
                                                session=session)
-        warned_count = Warns.increase(chat_member=chat_member, session=session)
+        warned_count = await Warns.increase(chat_member=chat_member, session=session)
 
         chat_member_user = await bot.get_chat_member(chat_id=callback_data.chat_id, user_id=callback_data.user_id)
 
@@ -134,4 +134,4 @@ async def warn_user(query: CallbackQuery, callback_data: AdminAction, bot: Bot):
             )
             await bot.send_message(chat_id=callback_data.chat_id,
                                    text=f"{util.mention_user(chat_member_user.user)} тепер заблокований у цьому чаті назавжди!")
-            Warns.delete(chat_member=chat_member, session=session)
+            await Warns.delete(chat_member=chat_member, session=session)
