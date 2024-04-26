@@ -22,12 +22,6 @@ class ChatMember(Base):
 
     @classmethod
     async def ensure_entity(cls, chat_id: int, user_id: int, session: AsyncSession):
-        # entity = session.query(cls).filter_by(chat_id=chat_id, user_id=user_id).first()
-        # if not entity:
-        #     entity = cls(chat_id=chat_id, user_id=user_id)
-        #     session.add(entity)
-        # return entity
-
         async with session:
             query = select(cls).filter_by(chat_id=chat_id, user_id=user_id)
             result = (await session.execute(query)).scalar()
@@ -39,10 +33,6 @@ class ChatMember(Base):
 
     @classmethod
     async def get_by_id(cls, id: int, session: AsyncSession):
-        # entity = session.query(cls).filter_by(id=id).first()
-        # return entity
-
         async with session:
             query = select().filter_by(id=id)
-            result = await session.execute(query)
-            return result.scalar()
+            return (await session.execute(query)).scalar()

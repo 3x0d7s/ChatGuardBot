@@ -25,16 +25,10 @@ class Warns(Base):
     async def of(cls, chat_member: ChatMember, session: AsyncSession):
         async with session:
             query = select(cls).filter_by(chat_member_id=chat_member.id)
-            result = await session.execute(query)
-            return result.scalar()
-        # return session.query(cls).filter_by(chat_member_id=chat_member.id).one()
+            return (await session.execute(query)).scalar()
 
     @classmethod
     async def create(cls, chat_member_id: int, session: AsyncSession):
-        # if not session.query(cls).filter_by(chat_member_id=chat_member_id).one_or_none():
-        #     session.add(cls(chat_member_id=chat_member_id, warn_count=0))
-        # session.commit()
-
         async with session:
             query = select(cls).filter_by(chat_member_id=chat_member_id)
             result = (await session.execute(query)).one_or_none()
@@ -44,19 +38,9 @@ class Warns(Base):
 
     @classmethod
     async def increase(cls, chat_member: ChatMember, session: AsyncSession):
-        # (session.query(cls)
-        #         .filter_by(chat_member_id=chat_member.id)
-        #         .update({'warn_count': cls.warn_count + 1}))
-        # session.commit()
-        # return (session.query(cls)
-        #         .filter_by(chat_member_id=chat_member.id)
-        #         .one()
-        #         .warn_count)
-
         async with session:
             query = select(cls).filter_by(chat_member_id=chat_member.id)
-            result = await session.execute(query)
-            profile = result.scalar()
+            result = (await session.execute(query)).scalar()
 
             stmt = (
                 update(cls)
@@ -66,13 +50,10 @@ class Warns(Base):
             await session.execute(stmt)
             await session.commit()
 
-            return profile.warn_count
+            return result.warn_count
 
     @classmethod
     async def delete(cls, chat_member: ChatMember, session: AsyncSession):
-        # session.query(cls).filter_by(chat_member_id=chat_member.id).delete()
-        # session.commit()
-
         async with session:
             query = select(cls).filter_by(chat_member_id=chat_member.id)
             result = (await session.execute(query)).scalar()

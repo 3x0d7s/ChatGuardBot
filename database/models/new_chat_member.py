@@ -61,23 +61,14 @@ class NewChatMember(Base):
             await session.delete(selected)
             await session.commit()
 
-            # session.delete(cls).filter_by(chat_member_id=chat_member_id)
-            # await session.commit()
-
     @classmethod
     async def pop_old_records(cls, session: AsyncSession):
         async with session:
             current_date = datetime.now().date()
 
-            # old_records = session.query(cls).filter(cls.restriction_date < current_date).all()
-            # for record in old_records:
-            #     session.delete(record)
-            # session.commit()
-            # return old_records
-
-            statement = select(cls).where(cls.restriction_date < current_date)
-            entities = await session.execute(statement)
-            for entity in entities.all():
+            query = select(cls).where(cls.restriction_date < current_date)
+            entities = (await session.execute(query)).scalars()
+            for entity in entities:
                 await session.delete(entity)
             await session.commit()
             return entities
