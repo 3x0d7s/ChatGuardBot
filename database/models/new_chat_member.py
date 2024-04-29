@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
-from typing import List
 
-from sqlalchemy import Column, Integer, ForeignKey, Date, delete
+from sqlalchemy import Column, Integer, ForeignKey, Date
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import relationship, Session
-from sqlalchemy import select, delete
+from sqlalchemy.orm import relationship
+from sqlalchemy import select
 
 from database.models.chat_member import ChatMember
 from database.config import Base
@@ -29,9 +28,9 @@ class NewChatMember(Base):
 
     @classmethod
     async def is_(cls, chat_id: int, user_id: int, session: AsyncSession) -> bool:
-        return await cls.of(
+        return (await cls.of(
             await ChatMember.ensure_entity(
-                chat_id=chat_id, user_id=user_id, session=session), session=session) is not None
+                chat_id=chat_id, user_id=user_id, session=session), session=session)) is not None
 
     @classmethod
     async def of(cls, chat_member: ChatMember, session: AsyncSession):

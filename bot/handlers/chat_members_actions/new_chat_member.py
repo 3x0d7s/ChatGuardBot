@@ -4,7 +4,7 @@ import datetime
 from aiogram import types, F, Router
 
 import util
-from bot import bot
+from bot.config import bot
 
 from database.config import sessionmaker
 from database.models.chat_member import ChatMember
@@ -79,6 +79,8 @@ async def answer_message(message: types.Message):
                                                      session=session)
         new_chat_member = await NewChatMember.of(chat_member=chat_member, session=session)
 
+        if not new_chat_member:
+            return
         question_message_id = new_chat_member.question_message_id
 
         try:

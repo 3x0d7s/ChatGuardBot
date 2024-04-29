@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey
-from sqlalchemy.orm import relationship, Session
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models.chat_member import ChatMember
@@ -40,8 +40,8 @@ class Warns(Base):
     async def increase(cls, chat_member: ChatMember, session: AsyncSession):
         async with session:
             query = select(cls).filter_by(chat_member_id=chat_member.id)
-            result = (await session.execute(query)).scalar()
-
+            result = await session.execute(query)
+            result = result.scalar_one()
             stmt = (
                 update(cls)
                 .filter_by(chat_member_id=chat_member.id)
