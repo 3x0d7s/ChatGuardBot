@@ -1,6 +1,6 @@
 from aiogram import Bot
 
-import util
+from bot import util
 from database.config import sessionmaker
 from database.models.chat_member import ChatMember
 from database.models.warns import Warns
@@ -16,6 +16,8 @@ async def warn(bot: Bot, chat_id: id, user_id: int, reason=''):
         warned_count = await Warns.increase(chat_member=chat_member, session=session)
 
         response = f"{util.mention_user(chat_member_user.user)} має {warned_count}/3 попереджень! "
+        if reason:
+            response += f"\nПричина останнього попередження: {reason}"
 
         await bot.send_message(chat_id=chat_id, text=response)
 

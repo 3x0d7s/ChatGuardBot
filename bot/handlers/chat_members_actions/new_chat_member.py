@@ -3,7 +3,7 @@ import datetime
 
 from aiogram import types, F, Router
 
-import util
+from bot import util
 from bot.config import bot
 
 from database.config import sessionmaker
