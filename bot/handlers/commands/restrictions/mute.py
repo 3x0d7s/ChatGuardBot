@@ -2,7 +2,7 @@ from aiogram import types, Router
 from aiogram.filters import Command
 
 from bot import util
-from bot.command_parser import parse_command
+from bot.command_parser import parse_command, parse_time
 from bot.config import bot
 from bot.commands.mute import mute
 
@@ -17,12 +17,17 @@ async def handle_mute(message: types.Message):
     msg = message.text
     parser = parse_command(msg)
     reason = parser['reason']
+    until_date = parse_time(parser['duration'])
 
     reply = message.reply_to_message
     if not reply:
         return
 
-    await mute(bot=bot, chat_id=reply.chat.id, user_id=reply.from_user.id, reason=reason)
+    await mute(bot=bot,
+               chat_id=reply.chat.id,
+               user_id=reply.from_user.id,
+               reason=reason,
+               until_date=until_date)
 
 
 @router.message(Command('unmute', prefix='/!'))
