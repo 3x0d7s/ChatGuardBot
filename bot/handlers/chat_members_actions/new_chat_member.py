@@ -33,6 +33,7 @@ async def block_member_after_timeout(user: types.User, chat_id: int, duration: d
 async def handle_new_chat_members():
     while True:
         await asyncio.sleep(60)
+        print("sleep from 'handle_new_chat_members()' func")
         async with sessionmaker() as session:
             old_records = await NewChatMember.pop_old_records(session)
             for old_record in old_records:

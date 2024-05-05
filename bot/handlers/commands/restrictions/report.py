@@ -5,15 +5,17 @@ from bot import util
 from bot.command_parser import parse_command
 from bot.commands.report import report
 from bot.config import bot
+from bot.filters.admin_restrictions_filter import RestrictionsFilter
 
 router = Router()
+router.message.filter(
+    RestrictionsFilter()
+)
 
 
 @router.message(Command('report', prefix="/!"))
 async def handle_report(message: types.Message):
     reply = message.reply_to_message
-    if not reply:
-        return
 
     response = (f'{util.mention_user(message.from_user)} '
                 'відправив скаргу на '

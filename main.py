@@ -64,7 +64,7 @@ async def main():
                        callback_queries.router)
     await set_commands(config.bot)
     await dp.start_polling(config.bot)
-    await new_chat_member.handle_new_chat_members()
+    await asyncio.create_task(new_chat_member.handle_new_chat_members())
 
 
 if __name__ == '__main__':
