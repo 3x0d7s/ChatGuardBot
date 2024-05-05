@@ -5,7 +5,11 @@ from aiogram import Bot, types
 from bot import util
 
 
-async def mute(bot: Bot, chat_id: id, user_id: int, reason: str = '', until_date: datetime = None):
+async def mute(bot: Bot,
+               chat_id: id,
+               user_id: int,
+               reason: str = '',
+               until_date: datetime = None):
     await bot.restrict_chat_member(
         chat_id=chat_id,
         user_id=user_id,

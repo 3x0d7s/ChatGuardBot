@@ -23,4 +23,4 @@ async def handle_warn(message: types.Message):
     if not reply:
         return
 
-    await warn(bot=bot, chat_id=reply.chat.id, user_id=reply.from_user.id)
+    await warn(bot=bot, chat_id=reply.chat.id, user_id=reply.from_user.id, reason=reason)

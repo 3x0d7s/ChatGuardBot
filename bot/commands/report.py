@@ -5,7 +5,12 @@ from bot import util
 from bot.btn_markups.report_btn_markup import report_btn_markup
 
 
-async def report(bot: Bot, chat_id: id, user_id: int, message: Message, response='', reason=''):
+async def report(bot: Bot,
+                 chat_id: id,
+                 user_id: int,
+                 message: Message,
+                 response: str = '',
+                 reason: str = ''):
     if reason:
         response += f"Причина: {reason}\n"
 

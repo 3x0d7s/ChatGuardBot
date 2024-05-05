@@ -6,7 +6,10 @@ from database.models.chat_member import ChatMember
 from database.models.warns import Warns
 
 
-async def warn(bot: Bot, chat_id: id, user_id: int, reason=''):
+async def warn(bot: Bot,
+               chat_id: id,
+               user_id: int,
+               reason: str = ''):
     async with sessionmaker() as session:
         chat_member_user = await bot.get_chat_member(chat_id=chat_id, user_id=user_id)
 

@@ -39,6 +39,8 @@ def parse_time(time_string: str | None) -> datetime | None:
                 time_delta = timedelta(days=value)
             case "w":
                 time_delta = timedelta(weeks=value)
+            case "m":
+                time_delta = timedelta(weeks=value * 4)
             case _:
                 return None
     else:
@@ -46,12 +48,3 @@ def parse_time(time_string: str | None) -> datetime | None:
 
     new_datetime = current_datetime + time_delta
     return new_datetime
-
-
-# command_str1 = '!ban 24h test hellow_world'
-# command_str2 = '!mute 20d testing'
-# parsed_command1 = parse_command(command_str1)
-# parsed_command2 = parse_command(command_str2)
-# print(parsed_command1)
-# print(parsed_command2)
-# print(parse_time(parsed_command2['duration']))

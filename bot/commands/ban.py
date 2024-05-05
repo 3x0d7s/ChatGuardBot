@@ -5,7 +5,11 @@ from aiogram import Bot
 from bot import util
 
 
-async def ban(bot: Bot, chat_id: id, user_id: int, reason: str = '', until_date: datetime = None):
+async def ban(bot: Bot,
+              chat_id: id,
+              user_id: int,
+              reason: str = '',
+              until_date: datetime = None):
     await bot.ban_chat_member(
         chat_id=chat_id,
         user_id=user_id,
