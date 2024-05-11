@@ -66,7 +66,7 @@ class NewChatMember(Base):
             current_date = datetime.now()
 
             query = select(cls).filter(cls.restriction_date < current_date)
-            entities = (await session.execute(query)).scalars()
+            entities = (await session.execute(query)).scalars().all()
             for entity in entities:
                 await session.delete(entity)
             await session.commit()

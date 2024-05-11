@@ -34,5 +34,5 @@ class ChatMember(Base):
     @classmethod
     async def get_by_id(cls, id: int, session: AsyncSession):
         async with session:
-            query = select().filter_by(id=id)
+            query = select(cls).filter_by(id=id)
             return (await session.execute(query)).scalar()
