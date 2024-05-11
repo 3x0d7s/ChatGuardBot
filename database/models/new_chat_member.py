@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from sqlalchemy import Column, Integer, ForeignKey, Date
+from sqlalchemy import Column, Integer, ForeignKey, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import relationship
 from sqlalchemy import select
@@ -16,7 +16,7 @@ class NewChatMember(Base):
     chat_member_id = Column(Integer, ForeignKey('chat_member.id'))
     user_answer = Column(Integer)
     question_message_id = Column(Integer)
-    restriction_date = Column(Date)
+    restriction_date = Column(DateTime)
 
     chat_member = relationship('ChatMember', back_populates='new_chat_member')
 
@@ -63,9 +63,9 @@ class NewChatMember(Base):
     @classmethod
     async def pop_old_records(cls, session: AsyncSession):
         async with session:
-            current_date = datetime.now().date()
+            current_date = datetime.now()
 
-            query = select(cls).where(cls.restriction_date < current_date)
+            query = select(cls).filter(cls.restriction_date < current_date)
             entities = (await session.execute(query)).scalars()
             for entity in entities:
                 await session.delete(entity)

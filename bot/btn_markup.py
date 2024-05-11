@@ -1,6 +1,6 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from bot.callbacks.admin_actions import AdminAction
+from bot.callbacks import AdminAction
 
 
 def report_btn_markup(chat_id: int, user_id: int, reason: str) -> InlineKeyboardMarkup:

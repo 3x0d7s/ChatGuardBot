@@ -1,10 +1,10 @@
 from aiogram import Router, F, Bot
 from aiogram.types import CallbackQuery
 
-from bot.callbacks.admin_actions import AdminAction, Action
-from bot.commands.ban import ban
-from bot.commands.mute import mute
-from bot.commands.warn import warn
+from bot.callbacks import AdminAction, Action
+from bot.restrictions.ban import ban
+from bot.restrictions.mute import mute
+from bot.restrictions.warn import warn
 
 router = Router()
 

@@ -1,11 +1,10 @@
 from aiogram import types, Router
 from aiogram.filters import Command
 
-from bot import util
 from bot.command_parser import parse_command, parse_time
 from bot.config import bot
-from bot.commands.ban import ban
-from bot.filters.admin_restrictions_filter import AdminRestrictionsFilter
+from bot.restrictions.ban import ban
+from bot.filters import AdminRestrictionsFilter
 
 router = Router()
 router.message.filter(

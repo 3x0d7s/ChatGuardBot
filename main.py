@@ -2,57 +2,25 @@ import asyncio
 import logging
 import sys
 
-from aiogram import Dispatcher, Bot
-from aiogram.types import BotCommand
+from aiogram import Dispatcher
 
 from bot import config
+from bot.commands import set_commands
 from bot.handlers.chat_members_actions import left_chat_member, new_chat_member
 from bot.handlers.commands.about import description, help
 from bot.handlers.commands.restrictions import ban, warn, mute, report
 from bot.handlers import callback_queries
+from bot.tasks import handle_new_chat_members
+from database.config import create_db
 
 dp = Dispatcher()
 
 
-async def set_commands(bot: Bot):
-    commands = [
-        BotCommand(
-            command='help',
-            description="Cписок доступних команд"
-        ),
-        BotCommand(
-            command='description',
-            description="Короткий опис того, для чого потрібний цей бот."
-        ),
-        BotCommand(
-            command='ban',
-            description="Заблокувати користувача у цій групі."
-        ),
-        BotCommand(
-            command='mute',
-            description="Обмежити користувача у правах надсилання повідомлень."
-        ),
-        BotCommand(
-            command='unban',
-            description="Зняти блокування користувача у цій групі."
-        ),
-        BotCommand(
-            command='unmute',
-            description="Зняти обмеження у користувача у правах надсилання повідомлень."
-        ),
-        BotCommand(
-            command='warn',
-            description="Попередження(якщо користувач отримує 3 попередження, його заблокуюють)."
-        ),
-        BotCommand(
-            command='report',
-            description="Кинути скаргу на користувача за надіслане ним повідомлення."
-        )
-    ]
-    await bot.set_my_commands(commands=commands)
+async def start_bot():
+    handle_new_chat_members_task = asyncio.create_task(handle_new_chat_members())
 
+    # await create_db()
 
-async def main():
     dp.include_routers(warn.router,
                        ban.router,
                        mute.router,
@@ -62,9 +30,15 @@ async def main():
                        left_chat_member.router,
                        new_chat_member.router,
                        callback_queries.router)
+    await config.bot.delete_webhook(drop_pending_updates=True)
     await set_commands(config.bot)
     await dp.start_polling(config.bot)
-    await asyncio.create_task(new_chat_member.handle_new_chat_members())
+
+    await handle_new_chat_members_task
+
+
+async def main():
+    await start_bot()
 
 
 if __name__ == '__main__':

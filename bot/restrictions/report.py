@@ -2,7 +2,7 @@ from aiogram import Bot
 from aiogram.types import Message
 
 from bot import util
-from bot.btn_markups.report_btn_markup import report_btn_markup
+from bot.btn_markup import report_btn_markup
 
 
 async def report(bot: Bot,

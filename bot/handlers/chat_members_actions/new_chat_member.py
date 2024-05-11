@@ -30,20 +30,6 @@ async def block_member_after_timeout(user: types.User, chat_id: int, duration: d
     )
 
 
-async def handle_new_chat_members():
-    while True:
-        await asyncio.sleep(60)
-        print("sleep from 'handle_new_chat_members()' func")
-        async with sessionmaker() as session:
-            old_records = await NewChatMember.pop_old_records(session)
-            for old_record in old_records:
-                user_entry = await ChatMember.get_by_id(old_record.chat_member_id, session=session)
-                user = bot.get_chat_member(chat_id=user_entry.chat_id, user_id=user_entry.user_id)
-                await block_member_after_timeout(user=user,
-                                                 chat_id=user_entry.chat_id,
-                                                 duration=datetime.timedelta(days=5))
-
-
 @router.message(F.new_chat_members)
 async def welcome_new_members(message: types.Message):
     if not util.is_bot_in_group_chat(message):

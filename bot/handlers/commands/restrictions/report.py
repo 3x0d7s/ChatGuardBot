@@ -3,9 +3,9 @@ from aiogram.filters import Command
 
 from bot import util
 from bot.command_parser import parse_command
-from bot.commands.report import report
+from bot.restrictions.report import report
 from bot.config import bot
-from bot.filters.admin_restrictions_filter import RestrictionsFilter
+from bot.filters import RestrictionsFilter
 
 router = Router()
 router.message.filter(
