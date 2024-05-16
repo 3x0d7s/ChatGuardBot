@@ -22,10 +22,15 @@ class Warns(Base):
         self.warn_count = warn_count
 
     @classmethod
-    async def of(cls, chat_member: ChatMember, session: AsyncSession):
+    async def ensure_entity(cls, chat_member: ChatMember, session: AsyncSession):
         async with session:
             query = select(cls).filter_by(chat_member_id=chat_member.id)
-            return (await session.execute(query)).scalar()
+            result = (await session.execute(query)).scalar()
+            if not result:
+                result = cls(chat_member.id, 1)
+                session.add(result)
+                await session.commit()
+            return result
 
     @classmethod
     async def create(cls, chat_member_id: int, session: AsyncSession):
@@ -39,9 +44,11 @@ class Warns(Base):
     @classmethod
     async def increase(cls, chat_member: ChatMember, session: AsyncSession):
         async with session:
-            query = select(cls).filter_by(chat_member_id=chat_member.id)
-            result = await session.execute(query)
-            result = result.scalar_one()
+            # query = select(cls).filter_by(chat_member_id=chat_member.id)
+            # result = await session.execute(query)
+            # result = result.scalar_one()
+
+            result = await cls.ensure_entity(chat_member, session)
             stmt = (
                 update(cls)
                 .filter_by(chat_member_id=chat_member.id)
