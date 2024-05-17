@@ -44,10 +44,6 @@ class Warns(Base):
     @classmethod
     async def increase(cls, chat_member: ChatMember, session: AsyncSession):
         async with session:
-            # query = select(cls).filter_by(chat_member_id=chat_member.id)
-            # result = await session.execute(query)
-            # result = result.scalar_one()
-
             result = await cls.ensure_entity(chat_member, session)
             stmt = (
                 update(cls)
