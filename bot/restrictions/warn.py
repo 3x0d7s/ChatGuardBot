@@ -2,8 +2,7 @@ from aiogram import Bot
 
 from bot import util
 from database.config import sessionmaker
-from database.models.chat_member import ChatMember
-from database.models.warns import Warns
+from database.repositories.chat_member_repo import ChatMemberRepo
 
 
 async def warn(bot: Bot,
@@ -13,10 +12,13 @@ async def warn(bot: Bot,
     async with sessionmaker() as session:
         chat_member_user = await bot.get_chat_member(chat_id=chat_id, user_id=user_id)
 
-        chat_member = await ChatMember.ensure_entity(chat_id=chat_id,
-                                                     user_id=user_id,
-                                                     session=session)
-        warned_count = await Warns.increase(chat_member=chat_member, session=session)
+        chat_member_repo = ChatMemberRepo(session)
+        chat_member = await chat_member_repo.get(chat_id=chat_id, user_id=user_id)
+        if chat_member and chat_member.is_blocked:
+            return
+        chat_member = await chat_member_repo.with_increased_warn_count(chat_id=chat_id, user_id=user_id)
+
+        warned_count = chat_member.warn_count
 
         response = f"{util.mention_user(chat_member_user.user)} має {warned_count}/3 попереджень! "
         if reason:
@@ -32,6 +34,6 @@ async def warn(bot: Bot,
             )
             user = (await bot.get_chat_member(chat_id=chat_id, user_id=user_id)).user
 
+            await chat_member_repo.mark_as_blocked(chat_id=chat_id, user_id=user_id)
             msg = f"{util.mention_user(user)} тепер заблокований у цьому чаті назавжди!"
             await bot.send_message(chat_id=chat_id, text=msg)
-            await Warns.delete(chat_member=chat_member, session=session)

@@ -1,5 +1,7 @@
 from aiogram import types, F, Router
 
+from database.config import sessionmaker
+from database.repositories.chat_member_repo import ChatMemberRepo
 
 router = Router()
 

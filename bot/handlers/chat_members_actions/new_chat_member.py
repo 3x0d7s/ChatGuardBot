@@ -1,15 +1,12 @@
-import asyncio
 import datetime
 
 from aiogram import types, F, Router
 
 from bot import util
 from bot.config import bot
-
 from database.config import sessionmaker
-from database.models.chat_member import ChatMember
-from database.models.new_chat_member import NewChatMember
-from database.models.warns import Warns
+from database.repositories.chat_member_repo import ChatMemberRepo
+from database.repositories.new_chat_member_repo import NewChatMemberRepo
 
 router = Router()
 
@@ -45,13 +42,12 @@ async def welcome_new_user(message: types.Message, user: types.User):
                                                 f"Cкільки буде {first_number} + {second_number}?\n"
                                                 "На відповідь дається 1 хвилина")
     async with sessionmaker() as session:
-        member_info = await ChatMember.ensure_entity(chat_id=message.chat.id,
-                                                     user_id=message.from_user.id,
-                                                     session=session)
-        await NewChatMember.insert(chat_member=member_info,
-                                   user_answer=user_answer,
-                                   question_message_id=welcome_message.message_id,
-                                   session=session)
+        await NewChatMemberRepo(session=session).insert(
+            chat_id=message.chat.id,
+            user_id=message.from_user.id,
+            user_answer=user_answer,
+            question_message_id=welcome_message.message_id
+        )
 
 
 @router.message(F.new_chat_members)
@@ -66,9 +62,9 @@ async def new_members(message: types.Message):
         await message.delete()
 
 
-@router.message(F.func(lambda msg: NewChatMember.is_(chat_id=msg.chat.id,
-                                                     user_id=msg.from_user.id,
-                                                     session=sessionmaker())))
+@router.message(F.func(lambda msg: NewChatMemberRepo(sessionmaker())
+                       .check_if_exists(chat_id=msg.chat.id,
+                                        user_id=msg.from_user.id)))
 async def answer_message(message: types.Message):
     if not util.is_bot_in_group_chat(message):
         return
@@ -76,19 +72,19 @@ async def answer_message(message: types.Message):
     async with sessionmaker() as session:
         user = message.from_user
 
-        chat_member = await ChatMember.ensure_entity(chat_id=message.chat.id, user_id=message.from_user.id,
-                                                     session=session)
-        new_chat_member = await NewChatMember.of(chat_member=chat_member, session=session)
-
-        if not new_chat_member:
-            return
+        new_chat_member_repo = NewChatMemberRepo(session=session)
+        new_chat_member = await new_chat_member_repo.get(
+            chat_id=message.chat.id,
+            user_id=message.from_user.id)
         question_message_id = new_chat_member.question_message_id
 
         try:
             user_answer = int(message.text.strip())
             if user_answer == new_chat_member.user_answer:
                 # await message.reply("Правильна відповідь!")
-                await Warns.create(chat_member_id=chat_member.id, session=session)
+                await ChatMemberRepo(session=session).insert(
+                    chat_id=new_chat_member.chat_id,
+                    user_id=new_chat_member.user_id)
             else:
                 raise ValueError
         except ValueError:
@@ -96,4 +92,7 @@ async def answer_message(message: types.Message):
         finally:
             await bot.delete_message(chat_id=message.chat.id, message_id=question_message_id)
             await message.delete()
-            await NewChatMember.delete(chat_member_id=chat_member.id, session=session)
+            await new_chat_member_repo.delete(
+                chat_id=message.chat.id,
+                user_id=message.from_user.id
+            )

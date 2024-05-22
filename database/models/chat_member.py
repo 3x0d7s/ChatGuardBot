@@ -1,7 +1,5 @@
-from sqlalchemy import Column, Integer
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import relationship
+from sqlalchemy import Integer, Boolean, false
+from sqlalchemy.orm import mapped_column, Mapped
 
 from database.config import Base
 
@@ -9,30 +7,9 @@ from database.config import Base
 class ChatMember(Base):
     __tablename__ = 'chat_member'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    chat_id = Column(Integer)
-    user_id = Column(Integer)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    chat_id: Mapped[int] = mapped_column(Integer)
+    user_id: Mapped[int] = mapped_column(Integer)
 
-    warns = relationship('Warns', back_populates='chat_member')
-    new_chat_member = relationship('NewChatMember', back_populates='chat_member')
-
-    def __init__(self, chat_id, user_id):
-        self.chat_id = chat_id
-        self.user_id = user_id
-
-    @classmethod
-    async def ensure_entity(cls, chat_id: int, user_id: int, session: AsyncSession):
-        async with session:
-            query = select(cls).filter_by(chat_id=chat_id, user_id=user_id)
-            result = (await session.execute(query)).scalar()
-            if not result:
-                result = cls(chat_id=chat_id, user_id=user_id)
-                session.add(result)
-                await session.commit()
-            return result
-
-    @classmethod
-    async def get_by_id(cls, id: int, session: AsyncSession):
-        async with session:
-            query = select(cls).filter_by(id=id)
-            return (await session.execute(query)).scalar()
+    warn_count: Mapped[int] = mapped_column(Integer)
+    is_blocked: Mapped[bool] = mapped_column(Boolean, server_default=false())
