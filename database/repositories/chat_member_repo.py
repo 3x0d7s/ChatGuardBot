@@ -10,34 +10,27 @@ class ChatMemberRepo(BaseRepo[ChatMember]):
     def __init__(self, session: AsyncSession):
         super().__init__(session, ChatMember)
 
-    async def insert(self,
-                     chat_id: int,
-                     user_id: int) -> ChatMember:
-        insert_stmt = (
-            insert(ChatMember)
-            .values(
-                chat_id=chat_id,
-                user_id=user_id,
-                warn_count=0
+    async def insert_if_absent(self,
+                               chat_id: int,
+                               user_id: int) -> ChatMember:
+        result = await self.get(chat_id=chat_id, user_id=user_id)
+
+        if not result:
+            insert_stmt = (
+                insert(ChatMember)
+                .values(
+                    chat_id=chat_id,
+                    user_id=user_id,
+                    warn_count=0
+                )
+                .returning(ChatMember)
             )
-            .returning(ChatMember)
-        )
-        result = await self.session.execute(insert_stmt)
+            result = await self.session.execute(insert_stmt)
 
         await self.session.commit()
         return result.scalar_one()
 
     async def with_increased_warn_count(self, chat_id: int, user_id: int):
-        # update_stmt = (
-        #     update(ChatMember)
-        #     .filter_by(
-        #         chat_id=chat_id,
-        #         user_id=user_id,
-        #     )
-        #     .values({'warn_count': ChatMember.warn_count + 1})
-        #     .returning(ChatMember)
-        # )
-
         select_stmt = select(ChatMember).filter_by(chat_id=chat_id, user_id=user_id)
         result = await self.session.execute(select_stmt)
         chat_member = result.scalar_one_or_none()

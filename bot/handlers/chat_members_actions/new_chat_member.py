@@ -26,6 +26,11 @@ async def block_member_after_timeout(user: types.User, chat_id: int, duration: d
         revoke_messages=False
     )
 
+    await (ChatMemberRepo(sessionmaker()).mark_as_blocked(
+        chat_id=chat_id,
+        user_id=user.id
+    ))
+
 
 async def introduce_itself(chat_id: int):
     await bot.send_message(chat_id=chat_id,
@@ -82,7 +87,7 @@ async def answer_message(message: types.Message):
             user_answer = int(message.text.strip())
             if user_answer == new_chat_member.user_answer:
                 # await message.reply("Правильна відповідь!")
-                await ChatMemberRepo(session=session).insert(
+                await ChatMemberRepo(session=session).insert_if_absent(
                     chat_id=new_chat_member.chat_id,
                     user_id=new_chat_member.user_id)
             else:

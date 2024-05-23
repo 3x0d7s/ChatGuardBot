@@ -17,7 +17,7 @@ dp = Dispatcher()
 
 
 async def start_bot():
-    # handle_new_chat_members_task = asyncio.create_task(handle_new_chat_members())
+    handle_new_chat_members_task = asyncio.create_task(handle_new_chat_members())
 
     # await create_db()
 
@@ -34,7 +34,7 @@ async def start_bot():
     await set_commands(config.bot)
     await dp.start_polling(config.bot)
 
-    # await handle_new_chat_members_task
+    await handle_new_chat_members_task
 
 
 async def main():
