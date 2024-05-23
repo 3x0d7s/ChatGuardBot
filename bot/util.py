@@ -4,6 +4,7 @@ from typing import List, Union
 from aiogram import types
 from aiogram.types import ChatMemberOwner, ChatMemberAdministrator
 
+
 def group_link(chat: types.Chat) -> str:
     if chat.username:
         return f"https://t.me/{chat.username}"
