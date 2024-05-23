@@ -18,7 +18,7 @@ async def ban(bot: Bot,
     )
 
     user = (await bot.get_chat_member(chat_id=chat_id, user_id=user_id)).user
-    response = f"{util.mention_user(user)} тепер заблокований у цьому чаті назавжди!"
+    response = f"{user.mention_markdown()} тепер заблокований у цьому чаті назавжди!"
 
     if reason:
         response += f"\nПричина блокування: {reason}"

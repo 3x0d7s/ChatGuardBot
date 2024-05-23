@@ -17,9 +17,9 @@ router.message.filter(
 async def handle_report(message: types.Message):
     reply = message.reply_to_message
 
-    response = (f'{util.mention_user(message.from_user)} '
+    response = (f'{message.from_user.mention_markdown()} '
                 'відправив скаргу на '
-                f'{util.mention_user(reply.from_user)}\n\n')
+                f'{reply.from_user.mention_markdown()}\n\n')
 
     msg = message.text
     parser = parse_command(msg)

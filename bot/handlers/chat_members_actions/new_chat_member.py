@@ -16,7 +16,7 @@ async def block_member_after_timeout(user: types.User, chat_id: int, duration: d
 
     await bot.send_message(
         chat_id,
-        f"{util.mention_user(user)} не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде "
+        f"{user.mention_markdown()} не дав правильної відповіді на запитання протягом 1 хвилини!\nВін буде "
         f"заблокований до {block_date.strftime('%d/%m/%Y %H:%M')}"
     )
     await bot.ban_chat_member(
@@ -43,7 +43,7 @@ async def introduce_itself(chat_id: int):
 
 async def welcome_new_user(message: types.Message, user: types.User):
     first_number, second_number, user_answer = util.generate_math_question()
-    welcome_message = await message.answer(text=f"Привіт, {util.mention_user(user)}\n"
+    welcome_message = await message.answer(text=f"Привіт, {user.mention_markdown()}\n"
                                                 f"Cкільки буде {first_number} + {second_number}?\n"
                                                 "На відповідь дається 1 хвилина")
     async with sessionmaker() as session:

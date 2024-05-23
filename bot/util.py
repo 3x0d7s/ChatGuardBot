@@ -4,13 +4,6 @@ from typing import List, Union
 from aiogram import types
 from aiogram.types import ChatMemberOwner, ChatMemberAdministrator
 
-
-def mention_user(user: types.User) -> str:
-    if user.username:
-        return "@" + user.username
-    return f"[{user.full_name}](tg://user?id={user.id})"
-
-
 def group_link(chat: types.Chat) -> str:
     if chat.username:
         return f"https://t.me/{chat.username}"
